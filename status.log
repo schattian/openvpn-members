@@ -1,0 +1,10 @@
+OpenVPN CLIENT LIST
+Updated,Tue Aug 11 12:18:07 2020
+Common Name,Real Address,Bytes Received,Bytes Sent,Connected Since
+sebach1,152.169.234.193:46211,188554,1077074,Tue Aug 11 12:17:13 2020
+ROUTING TABLE
+Virtual Address,Common Name,Real Address,Last Ref
+10.8.0.2,sebach1,152.169.234.193:46211,Tue Aug 11 12:18:06 2020
+GLOBAL STATS
+Max bcast/mcast queue length,1
+END

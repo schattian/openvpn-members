@@ -1,0 +1,16 @@
+version: "3.7"
+services:
+  app:
+    build: .
+    ports:
+      - "9990:9990"
+    volumes:
+      - /var/log/openvpn/status.log:/app/logger
+
+volumes:
+  app:
+
+networks:
+  default:
+    external:
+      name: localdev
