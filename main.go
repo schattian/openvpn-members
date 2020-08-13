@@ -47,22 +47,22 @@ func printHeaders() string {
 	return `
 <table>
 	<tr>
-		<td>	
+		<td>
 			USUARIO
-		</td>	
-		<td>	
-			SPREE 3.0
+		</td>
+		<td>
+			:3010
 		</td>
 
-		<td>	
-			SPREE 4.1
+		<td>
+			:3000
 		</td>
 
-		<td>	
-			BCR
+		<td>
+			:8080
 		</td>
 
-		<td>	
+		<td>
 			ÚLTIMA VEZ
 		</td>
 
@@ -77,25 +77,25 @@ func printUser(str string) string {
 	return fmt.Sprintf(`
 	<tr>
 
-		<td>	
-			<a href="%s">%s</a>	
-		</td>	
-
-		<td>	
-			<a href="%s">%s</a>	
+		<td>
+			<a href="%s">%s</a>
 		</td>
 
-		<td>	
-			<a href="%s">%s</a>	
+		<td>
+			<a href="%s">%s</a>
 		</td>
 
-		<td>	
-			<a href="%s">%s</a>	
+		<td>
+			<a href="%s">%s</a>
 		</td>
 
-		<td>	
-			%s	
-		</td>	
+		<td>
+			<a href="%s">%s</a>
+		</td>
+
+		<td>
+			%s
+		</td>
 
 
 		</tr>
