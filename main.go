@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"context"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -61,7 +62,7 @@ func nmapFrequentPorts(ips ...string) map[string][]string {
 		}
 
 		for _, port := range host.Ports {
-			if port.Status() == nmap.Open {
+			if port.Status() == nmap.Open || port.Status() == nmap.Filtered {
 				openPortsByIp[ips[i]] = append(openPortsByIp[ips[i]], strconv.Itoa(int(port.ID)))
 			}
 		}
@@ -77,21 +78,26 @@ func users(w http.ResponseWriter, r *http.Request) {
 	defer file.Close()
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 
+	fmt.Fprintln(w, printHeaders())
+
+	currentIP, err := myPublicIP()
+	if err != nil {
+		fmt.Fprintf(w, "Failed to get local public ip: %v", err)
+	}
+	fmt.Fprintln(w, printUser(currentIP+",server,,,"))
+
 	scanner := bufio.NewScanner(file)
 	for i := 0; scanner.Scan(); i++ {
 		if i <= 5 {
 			continue
 		}
 		if len(scanner.Text()) == 12 {
-			fmt.Fprintln(w, `</table>`)
 			break
 		}
-		if i == 6 {
-			fmt.Fprintln(w, printHeaders())
-		}
 		fmt.Fprintln(w, printUser(scanner.Text()))
+		fmt.Fprintln(w, "</br>")
 	}
-
+	fmt.Fprintln(w, `</table>`)
 	if err := scanner.Err(); err != nil {
 		fmt.Fprintf(w, "Failed to scan users: %v", err)
 	}
@@ -113,6 +119,20 @@ func portColumn(svc, port, ip string) string {
 			<a href="%s">%s</a>
 		</td>
 	`, "http://"+ip+":"+port, svc)
+}
+
+func myPublicIP() (string, error) {
+	url := "https://api.ipify.org?format=text"
+	resp, err := http.Get(url)
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+	ip, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return "", err
+	}
+	return string(ip), nil
 }
 
 func printUser(str string) string {
