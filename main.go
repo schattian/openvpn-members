@@ -2,15 +2,70 @@ package main
 
 import (
 	"bufio"
+	"context"
 	"fmt"
+	"log"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
+	"time"
+
+	"github.com/Ullaakut/nmap"
 )
+
+var frequentPortsWithAlias = map[string]string{
+	"80":   "httpserve",
+	"3000": "rails",
+	"3010": "rails alt",
+	"8080": "node",
+}
+
+func frequentPorts() (ports []string) {
+	for v := range frequentPortsWithAlias {
+		ports = append(ports, v)
+	}
+	return
+}
 
 func main() {
 	http.HandleFunc("/", users)
 	http.ListenAndServe(":9990", nil)
+}
+
+func nmapFrequentPorts(ips ...string) map[string][]string {
+	openPortsByIp := make(map[string][]string)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+	defer cancel()
+
+	scanner, err := nmap.NewScanner(
+		nmap.WithTargets(ips...),
+		nmap.WithPorts(frequentPorts()...),
+		nmap.WithContext(ctx),
+	)
+
+	if err != nil {
+		log.Fatalf("unable to create nmap scanner: %v", err)
+	}
+
+	result, _, err := scanner.Run()
+	if err != nil {
+		log.Fatalf("unable to run nmap scan: %v", err)
+	}
+
+	// Use the results to print an example output
+	for i, host := range result.Hosts {
+		if len(host.Ports) == 0 || len(host.Addresses) == 0 {
+			continue
+		}
+
+		for _, port := range host.Ports {
+			if port.Status() == nmap.Open {
+				openPortsByIp[ips[i]] = append(openPortsByIp[ips[i]], strconv.Itoa(int(port.ID)))
+			}
+		}
+	}
+	return openPortsByIp
 }
 
 func users(w http.ResponseWriter, r *http.Request) {
@@ -41,8 +96,6 @@ func users(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-const sep string = `	 	|		 `
-
 func printHeaders() string {
 	return `
 <table>
@@ -50,60 +103,33 @@ func printHeaders() string {
 		<td>
 			USUARIO
 		</td>
-		<td>
-			:3010
-		</td>
-
-		<td>
-			:3000
-		</td>
-
-		<td>
-			:8080
-		</td>
-
-		<td>
-			ÚLTIMA VEZ
-		</td>
-
-
-
 	</tr>
 `
+}
+func portColumn(svc, port, ip string) string {
+	return fmt.Sprintf(`
+		<td>
+			<a href="%s">%s</a>
+		</td>
+	`, "http://"+ip+":"+port, svc)
 }
 
 func printUser(str string) string {
 	splitted := strings.Split(str, ",")
-	return fmt.Sprintf(`
-	<tr>
-
+	ip, alias := splitted[0], splitted[1]
+	base := fmt.Sprintf(`<tr>
 		<td>
 			<a href="%s">%s</a>
 		</td>
 
-		<td>
-			<a href="%s">%s</a>
-		</td>
-
-		<td>
-			<a href="%s">%s</a>
-		</td>
-
-		<td>
-			<a href="%s">%s</a>
-		</td>
-
-		<td>
-			%s
-		</td>
-
-
-		</tr>
-`,
-		"http://"+splitted[0], splitted[1],
-		"http://"+splitted[0]+":3010", splitted[1],
-		"http://"+splitted[0]+":3000", splitted[1],
-		"http://"+splitted[0]+":8080", splitted[1],
-		splitted[len(splitted)-1],
-	)
+	`, "http://"+ip, alias)
+	openPortsByIp := nmapFrequentPorts(ip)
+	for _, ports := range openPortsByIp {
+		for _, port := range ports {
+			portAlias := frequentPortsWithAlias[port]
+			base += portColumn(portAlias, port, ip)
+		}
+	}
+	base += "</tr>"
+	return base
 }
