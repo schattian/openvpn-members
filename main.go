@@ -19,6 +19,7 @@ var frequentPortsWithAlias = map[string]string{
 	"3000": "rails",
 	"3010": "rails alt",
 	"8080": "node",
+	"5432": "postgres",
 }
 
 func frequentPorts() (ports []string) {
