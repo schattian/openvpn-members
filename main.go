@@ -108,7 +108,7 @@ func printHeaders() string {
 <table>
 	<tr>
 		<td>
-			USUARIO
+			CLIENT
 		</td>
 	</tr>
 `
